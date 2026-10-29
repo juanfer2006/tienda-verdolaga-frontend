@@ -1,7 +1,7 @@
 import React from 'react';
 import type { Metadata } from 'next';
 import './globals.css';
-import { Navbar } from '@/features/common/components/Navbar';
+import { NavbarContainer } from '@/features/common/components/NavbarContainer';
 import { Footer } from '@/features/common/components/Footer';
 
 export const metadata: Metadata = {
@@ -18,7 +18,7 @@ export default function RootLayout({
   return (
     <html lang="es" className="scroll-smooth">
       <body className="min-h-screen flex flex-col bg-verdolaga-fondo text-gray-900 antialiased">
-        <Navbar />
+        <NavbarContainer />
         <main className="flex-1 w-full">{children}</main>
         <Footer />
       </body>
