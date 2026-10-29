@@ -1,6 +1,6 @@
 'use client';
 
-import React, { Suspense } from 'react';
+import React, { Suspense, useState } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Hero } from '@/features/common/components/Hero';
 import { CategoriasSection } from '@/features/catalogo/components/CategoriasSection';
@@ -8,6 +8,7 @@ import { ProductCard } from '@/features/catalogo/components/ProductCard';
 import { Pagination } from '@/features/common/components/Pagination';
 import { useProductos } from '@/features/catalogo/hooks/useProductos';
 import { Producto } from '@/features/catalogo/domain/Producto';
+import { PedidoModal } from '@/features/pedidos/components/PedidoModal';
 
 const CATEGORIAS_FILTRO = [
   { id: 'camisetas', label: 'Camisetas' },
@@ -19,6 +20,11 @@ const CATEGORIAS_FILTRO = [
 function CatalogoContenido() {
   const searchParams = useSearchParams();
   const router = useRouter();
+
+  // Estados del modal de interacción
+  const [selectedProduct, setSelectedProduct] = useState<Producto | null>(null);
+  const [modalPedidoOpen, setModalPedidoOpen] = useState(false);
+  const [mensajeExito, setMensajeExito] = useState(false);
 
   // Leer estado de la URL (?page=1&categoria=camisetas)
   const categoriaActual = searchParams.get('categoria') || 'camisetas';
@@ -52,7 +58,8 @@ function CatalogoContenido() {
         return;
       }
     }
-    alert(`Has seleccionado: ${prod.nombre}. En el siguiente commit se procesa el pedido en la base de datos.`);
+    setSelectedProduct(prod);
+    setModalPedidoOpen(true);
   };
 
   return (
@@ -65,6 +72,20 @@ function CatalogoContenido() {
           Encuentra camisetas exclusivas, accesorios urbanos y coleccionables históricos.
         </p>
       </div>
+
+      {/* Alerta de pedido exitoso */}
+      {mensajeExito && (
+        <div className="max-w-md mx-auto mb-8 p-4 bg-emerald-50 border border-emerald-300 rounded-xl text-emerald-900 text-sm font-semibold flex items-center justify-between shadow-xs">
+          <span>🎉 ¡Tu pedido ha sido guardado exitosamente en la base de datos!</span>
+          <button
+            type="button"
+            onClick={() => setMensajeExito(false)}
+            className="text-emerald-700 hover:text-emerald-950 font-bold ml-2"
+          >
+            ✕
+          </button>
+        </div>
+      )}
 
       {/* Botones de Filtro por Categoría con URL sincronizada */}
       <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3 mb-10">
@@ -152,6 +173,14 @@ function CatalogoContenido() {
           )}
         </>
       )}
+
+      {/* Modal para realizar pedido (Interacción que guarda en la base de datos) */}
+      <PedidoModal
+        producto={selectedProduct}
+        isOpen={modalPedidoOpen}
+        onClose={() => setModalPedidoOpen(false)}
+        onSuccess={() => setMensajeExito(true)}
+      />
     </section>
   );
 }
