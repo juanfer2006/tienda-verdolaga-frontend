@@ -160,9 +160,6 @@ Sin embargo, la decisión final y la validación de permisos, seguridad y flujo 
 
 ## Evidencia de Network
 
-La rúbrica pide una captura de la pestaña `Network` mostrando una petición protegida con el header `Authorization`.
-
-Se recomienda guardar la captura en una carpeta `docs/` y documentarla así:
 
 <img width="1852" height="898" alt="image" src="https://github.com/user-attachments/assets/18c20f1b-748e-4c1d-ba34-b51ea282d9d4" />
 
