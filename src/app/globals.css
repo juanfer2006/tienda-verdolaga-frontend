@@ -1,0 +1,21 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --verdolaga-principal: #00843D;
+  --verdolaga-oscuro: #005A2B;
+}
+
+body {
+  background-color: #F4F6F4;
+  color: #1F2937;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  overflow-x: hidden;
+}
+
+/* Enfoque accesible */
+:focus-visible {
+  outline: 2px solid var(--verdolaga-principal);
+  outline-offset: 2px;
+}
