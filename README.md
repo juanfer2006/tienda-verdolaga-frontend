@@ -1,8 +1,8 @@
-# Tienda Verdolaga Frontend
+﻿# Tienda Verdolaga Frontend
 
-Este repositorio contiene la parte cliente de Tienda Verdolaga, una tienda de ropa con catálogo, autenticación, pedidos y panel administrativo para usuarios con rol `ADMIN`.
+Este repositorio contiene la parte cliente de Tienda Verdolaga, una tienda de productos deportivos con catálogo, autenticación, pedidos y panel administrativo para usuarios con rol `ADMIN`.
 
-El frontend consume la API del backend del proyecto y se encarga de:
+El frontend consume la API REST del backend y se encarga de:
 
 - mostrar el catálogo de productos,
 - permitir registro e inicio de sesión,
@@ -10,31 +10,36 @@ El frontend consume la API del backend del proyecto y se encarga de:
 - gestionar pedidos del cliente,
 - restringir accesos al panel de administración según el rol.
 
+## Enlaces del proyecto
+
+- Frontend desplegado en Vercel: https://tienda-verdolaga-frontend.vercel.app/
+- Backend desplegado en Render: https://tienda-verdolaga-backend.onrender.com
+- Repositorio frontend: https://github.com/juanfer2006/tienda-verdolaga-frontend.git
+- Repositorio backend: https://github.com/juanfer2006/tienda-verdolaga-backend.git
+
 ## Stack principal
 
 - Next.js 14
 - React 18
 - TypeScript
 - Tailwind CSS
-- Fetch nativo para consumo de la API
+- Cliente HTTP centralizado para la API
 
 ## Requisitos previos
 
-Antes de levantar este frontend, asegúrate de tener instalado:
-
 - Node.js 18 o superior
 - npm
-- el backend de Tienda Verdolaga corriendo localmente
+- backend levantado o desplegado
 
 ## Variables de entorno
 
-Crea un archivo `.env.local` en la raíz del proyecto con la URL del backend:
+Crea un archivo `.env.local` en la raíz del proyecto:
 
 ```env
 NEXT_PUBLIC_API_HOST=http://localhost:4000
 ```
 
-Si tu backend corre en otro puerto o host, cambia ese valor. El frontend lo usa para construir las peticiones a `/api/...`.
+Si el backend corre en otro host o puerto, cambia este valor. El frontend lo usa para construir las peticiones a `/api/...`.
 
 ## Instalación y ejecución local
 
@@ -44,17 +49,17 @@ Si tu backend corre en otro puerto o host, cambia ese valor. El frontend lo usa 
 npm install
 ```
 
-2. Configura el archivo `.env.local` como se indicó arriba.
+2. Crea el archivo `.env.local` con la URL del backend.
 
-3. Asegúrate de que el backend esté levantado y con sus seeds ejecutados (si corresponde al repositorio del backend).
+3. Asegúrate de que el backend esté levantado y con la base de datos conectada.
 
-4. Inicia la app en modo desarrollo:
+4. Inicia la aplicación:
 
 ```bash
 npm run dev
 ```
 
-5. Abre la aplicación en el navegador:
+5. Abre la app en el navegador:
 
 ```bash
 http://localhost:3000
@@ -62,124 +67,123 @@ http://localhost:3000
 
 ## Credenciales de prueba
 
-Para pruebas rápidas, el proyecto usa estas cuentas de ejemplo:
+Estas credenciales fueron creadas por el seed del backend y sirven para probar login, permisos y rutas protegidas:
 
-- Administrador: `admin@tiendaverdolaga.com`
-- Cliente: `hincha@gmail.com`
+| Rol | Correo | Contraseña |
+| :--- | :--- | :--- |
+| Administrador | `admin@tiendaverdolaga.com` | `Verdolaga2026*` |
+| Usuario normal | `hincha@gmail.com` | `Verdolaga2026*` |
 
-> El acceso exacto y la contraseña deben coincidir con las credenciales definidas en el backend, ya que este frontend no crea usuarios ni valida credenciales por sí solo; solo envía la petición al backend y reacciona a la respuesta.
+> Importante: el frontend no crea ni valida usuarios por sí solo; toda la autenticación real se hace en el backend con JWT.
 
 ## Cómo funciona el login en este frontend
 
-El flujo real es el siguiente:
-
-1. El usuario llena el formulario del login en [src/features/auth/components/LoginForm.tsx](src/features/auth/components/LoginForm.tsx).
-2. El formulario valida formato de correo y contraseña antes de enviar.
-3. Se llama a `authService.login(...)` desde [src/features/auth/services/authService.ts](src/features/auth/services/authService.ts).
-4. Esa función hace una petición `POST` a `/api/auth/login` usando el cliente HTTP centralizado.
-5. La respuesta del backend incluye un token JWT y la información del usuario.
-6. El frontend guarda ambos datos en `localStorage` mediante `guardarSesion(...)`.
-7. El estado global de autenticación se actualiza con `useAuth`, que re-renderiza la UI según si el usuario está autenticado o no.
-8. Si la respuesta es exitosa, el usuario queda logueado y la navegación cambia para mostrar opciones como "Mis Pedidos" o "Administración" según su rol.
+1. El usuario llena el formulario de login.
+2. El formulario valida el correo y la contraseña antes de enviar.
+3. Se llama a `authService.login(...)` desde `src/features/auth/services/authService.ts`.
+4. Esa función hace una petición `POST` a `/api/auth/login` con el cliente HTTP centralizado.
+5. El backend responde con un token JWT y los datos del usuario.
+6. El frontend guarda esa información en `localStorage`.
+7. El estado global de autenticación se actualiza con `useAuth`.
+8. Si la respuesta es exitosa, la navegación cambia según el rol del usuario.
 
 ## Dónde se guarda el token y por qué es importante
 
 El token se guarda en `localStorage` con la clave `tienda_verdolaga_token`.
 
-Esto se hace en [src/features/auth/services/authService.ts](src/features/auth/services/authService.ts):
+Ejemplo:
 
 ```ts
 localStorage.setItem('tienda_verdolaga_token', authResponse.token);
 localStorage.setItem('tienda_verdolaga_user', JSON.stringify(authResponse.user));
 ```
 
-Y luego se reutiliza en [src/features/common/http.ts](src/features/common/http.ts) para adjuntarlo a cada petición con el header `Authorization`.
+Luego se reutiliza en el cliente HTTP para enviarlo como `Authorization: Bearer <token>` en cada petición protegida.
 
 ### Riesgos y decisiones
 
-- XSS: si un atacante logra inyectar JavaScript en la app, puede leer `localStorage` y robar el token.
-- CSRF: como el token no se envía en cookies con `SameSite` ni se maneja mediante cookies HttpOnly, el riesgo clásico de CSRF es menor que en un flujo basado en cookies, pero sigue existiendo si la app se ve comprometida por XSS.
-- En un entorno más seguro, una estrategia sólida suele usar cookies HttpOnly con políticas CSRF reforzadas, pero este proyecto usa almacenamiento local por simplicidad de implementación del frontend y por la arquitectura del backend que devuelve un token JWT.
+- XSS: si un atacante logra inyectar JavaScript en la app, podría leer el `localStorage` y robar el token.
+- CSRF: es menor en esta implementación porque no se usa cookie HttpOnly, pero sigue relacionado con ataques de XSS.
+- En un entorno más seguro, se recomienda usar cookies `HttpOnly` con `SameSite` y protección CSRF. Para la entrega se usó `localStorage` por simplicidad y por la arquitectura del proyecto.
 
 ## 401 vs 403 en este proyecto
 
 ### 401 Unauthorized
 
-Se presenta cuando el usuario no tiene un token válido o este expiró.
+Se presenta cuando el usuario no tiene un token válido, el token expiró o no se envía en la petición.
 
-En [src/features/common/http.ts](src/features/common/http.ts) se detecta este caso y se ejecuta lo siguiente:
+Ejemplos:
 
-- se limpia la sesión en `localStorage`,
-- se redirige a `/login?session_expired=true`.
+- intenta entrar sin sesión,
+- token vencido,
+- token corrupto o eliminado del navegador.
 
-Esto suele ocurrir cuando:
-
-- el usuario intenta acceder a un recurso protegido sin iniciar sesión,
-- el token venció,
-- el token fue eliminado o es inválido.
+Cuando ocurre, el frontend limpia la sesión y redirige a `/login?session_expired=true`.
 
 ### 403 Forbidden
 
-Se presenta cuando el usuario tiene sesión, pero no tiene permisos para una acción o una ruta.
+Se presenta cuando el usuario sí tiene sesión, pero no tiene permisos para esa acción.
 
-Ejemplos reales aquí:
+Ejemplos:
 
-- un usuario normal intenta entrar a `/admin`,
-- un cliente intenta eliminar un producto desde la pantalla de administración,
-- un usuario sin rol `ADMIN` intenta realizar una acción restringida por el backend.
+- un cliente intenta entrar a `/admin`,
+- un usuario normal intenta borrar un producto,
+- un usuario sin rol `ADMIN` intenta ejecutar una acción reservada para administradores.
 
-La protección de rutas se hace en [src/app/admin/page.tsx](src/app/admin/page.tsx): si el usuario no existe o no es `ADMIN`, se redirige.
+## Protección de rutas y panel administrativo
 
-## Panel de administración y protección de rutas
+- `/mis-pedidos`: solo usuarios autenticados.
+- `/admin`: solo usuarios con rol `ADMIN`.
+- si un usuario normal intenta escribir la URL manualmente, la app lo redirige o deniega el acceso.
 
-El panel administrativo solo está disponible para usuarios con rol `ADMIN`.
-
-La lógica se implementa con `useAuth()` y una validación en la vista de administración:
-
-- si no hay usuario, redirige al login,
-- si el usuario existe pero no es administrador, redirige al home,
-- si tiene permisos, permite crear, editar o eliminar productos.
+La protección real se hace en el backend con 401/403 y en el frontend con redirecciones para mejorar la experiencia.
 
 ## Reflexión sobre el uso de IA
 
-La inteligencia artificial fue útil como apoyo para acelerar tareas repetitivas y mejorar la organización del código, como:
+La IA fue útil para acelerar tareas repetitivas como:
 
-- sugerir estructura modular para componentes y servicios,
-- ayudar a mantener una lógica de autenticación más clara,
-- acelerar la revisión de errores y la organización del proyecto.
+- estructurar la organización por features,
+- sugerir servicios y hooks,
+- revisar errores y mejorar la lógica de autenticación.
 
-Sin embargo, la IA no reemplaza la comprensión del negocio ni la validación del flujo real. En este proyecto fue valiosa como herramienta complementaria, pero la decisión final y la verificación de comportamientos sensibles (seguridad, permisos, redirecciones y manejo de errores) debieron hacerse con criterio humano.
+Sin embargo, la decisión final y la validación de permisos, seguridad y flujo real siempre debieron hacerse por un humano. La IA fue apoyo, no sustituto del criterio técnico.
 
 ## Despliegues y enlaces
 
-### Backend
-
-- Render: [agregar enlace de Render]
-
 ### Frontend
 
-- Vercel: [agregar enlace de Vercel]
+- Vercel: https://tienda-verdolaga-frontend.vercel.app/
 
-### Capturas de Network
+### Backend
 
-- [Agregar captura de login exitoso]
-- [Agregar captura de 401/403]
-- [Agregar captura del request con Authorization]
+- Render: https://tienda-verdolaga-backend.onrender.com
 
-> Estas secciones pueden completarse con las evidencias finales de la entrega para dejar un README completamente documentado y listo para presentación.
+## Evidencia de Network
+
+La rúbrica pide una captura de la pestaña `Network` mostrando una petición protegida con el header `Authorization`.
+
+Se recomienda guardar la captura en una carpeta `docs/` y documentarla así:
+
+```md
+![Captura de Network con JWT](./docs/network-login.png)
+```
+
+La imagen debe mostrar una petición autenticada al backend con `Authorization: Bearer ...` y la respuesta `200 OK` tras iniciar sesión correctamente.
 
 ## Resultado esperado
 
 Este frontend está listo para:
 
 - iniciar sesión con usuarios reales del backend,
-- interactuar con el catálogo,
+- consumir el catálogo desde la API,
 - mostrar información según el rol del usuario,
 - proteger rutas administrativas,
-- consumir la API con token JWT de forma centralizada.
+- manejar correctamente 401 y 403,
+- mantener la sesión en el navegador entre recargas.
 
-## Mensaje de commit sugerido
+## Mensaje sugerido de commit
 
 ```bash
 docs: readme completo con decisiones tecnicas y guia de ejecucion
 ```
+
