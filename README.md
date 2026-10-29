@@ -164,9 +164,8 @@ La rúbrica pide una captura de la pestaña `Network` mostrando una petición pr
 
 Se recomienda guardar la captura en una carpeta `docs/` y documentarla así:
 
-```md
-![Captura de Network con JWT](./docs/network-login.png)
-```
+<img width="1852" height="898" alt="image" src="https://github.com/user-attachments/assets/18c20f1b-748e-4c1d-ba34-b51ea282d9d4" />
+
 
 La imagen debe mostrar una petición autenticada al backend con `Authorization: Bearer ...` y la respuesta `200 OK` tras iniciar sesión correctamente.
 
